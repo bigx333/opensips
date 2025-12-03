@@ -32,6 +32,7 @@
 
 #include "../../parser/msg_parser.h"
 #include "../../parser/contact/contact.h"
+#include "../../pvar.h"
 #include "../../script_cb.h"
 #include "../../socket_info.h"
 
@@ -90,6 +91,11 @@ struct mid_reg_info {
 	int expires_out; /* [NEW] outgoing expires value (not a unix TS!) */
 	                 /* used to absorb/relay new REGISTERs */
 
+	/* effective expires policy for this REGISTER */
+	int eff_min_expires;
+	int eff_max_expires;
+	int eff_default_expires;
+
 	unsigned int last_reg_ts; /* [NEW] used to absorb/relay new REGISTERs
 	                                   marks the last successful reg */
 
@@ -126,6 +132,9 @@ extern struct sig_binds sig_api;
 
 extern int retry_after;
 extern unsigned int outgoing_expires;
+
+extern pv_spec_t min_expires_avp;
+extern pv_spec_t max_expires_avp;
 
 extern enum mid_reg_mode reg_mode;
 extern enum mid_reg_insertion_mode ctid_insertion;
