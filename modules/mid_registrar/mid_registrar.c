@@ -70,6 +70,11 @@ int min_expires     = 10;   /*!< Minimum expires the phones are allowed to use
 							  in seconds - use 0 to switch expires checking off */
 int max_expires     = 3600;
 
+str min_expires_avp_param = {0, 0};
+str max_expires_avp_param = {0, 0};
+pv_spec_t min_expires_avp;
+pv_spec_t max_expires_avp;
+
 int retry_after = 0;		/*!< The value of Retry-After HF in 5xx replies */
 
 qvalue_t default_q  = Q_UNSPECIFIED; /*!< Default q value multiplied by 1000 */
@@ -153,6 +158,8 @@ static param_export_t mod_params[] = {
 	{ "default_expires",      INT_PARAM, &default_expires },
 	{ "min_expires",          INT_PARAM, &min_expires },
 	{ "max_expires",          INT_PARAM, &max_expires },
+	{ "min_expires_avp",     STR_PARAM, &min_expires_avp_param.s },
+	{ "max_expires_avp",     STR_PARAM, &max_expires_avp_param.s },
 	{ "default_q",            INT_PARAM, &default_q },
 	{ "tcp_persistent_flag",  STR_PARAM, &tcp_persistent_flag_s },
 	{ "realm_prefix",         STR_PARAM, &realm_prefix.s },
@@ -493,6 +500,9 @@ struct mid_reg_info *mri_dup(struct mid_reg_info *mri)
 		shm_str_dup(&new->main_reg_next_hop, &mri->main_reg_next_hop);
 
 	new->pn_provider_state = mri->pn_provider_state;
+	new->eff_min_expires = mri->eff_min_expires;
+	new->eff_max_expires = mri->eff_max_expires;
+	new->eff_default_expires = mri->eff_default_expires;
 
 	new->cmatch.mode = mri->cmatch.mode;
 	if (mri->cmatch.match_params)
@@ -593,6 +603,26 @@ int solve_avp_defs(void)
 			if (!pv_parse_spec(&extra_ct_params_str, &extra_ct_params_avp) ||
 			     extra_ct_params_avp.type != PVT_AVP) {
 				LM_ERR("extra_ct_params_avp: malformed or non-AVP content!\n");
+				return -1;
+			}
+		}
+	}
+
+	if (min_expires_avp_param.s) {
+		min_expires_avp_param.len = strlen(min_expires_avp_param.s);
+		if (min_expires_avp_param.len) {
+			if (!pv_parse_spec(&min_expires_avp_param, &min_expires_avp)) {
+				LM_ERR("malformed min_expires_avp PV definition\n");
+				return -1;
+			}
+		}
+	}
+
+	if (max_expires_avp_param.s) {
+		max_expires_avp_param.len = strlen(max_expires_avp_param.s);
+		if (max_expires_avp_param.len) {
+			if (!pv_parse_spec(&max_expires_avp_param, &max_expires_avp)) {
+				LM_ERR("malformed max_expires_avp PV definition\n");
 				return -1;
 			}
 		}
